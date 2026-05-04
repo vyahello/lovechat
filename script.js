@@ -4,9 +4,9 @@
 
 /* ----- CONFIG ----- */
 const PHOTOS = {
-  me:  ['main_photos/me1.JPG', 'main_photos/me2.JPG'],
-  she: ['main_photos/she1.jpg', 'main_photos/she2.jpg'],
-  we:  ['main_photos/we.jpeg', 'main_photos/we1.jpeg', 'main_photos/we5.jpg', 'main_photos/we11.jpg', 'main_photos/we13.jpg', 'main_photos/we14.jpg', 'main_photos/we15.jpeg'],
+  me:  ['photos/me1.JPG', 'photos/me2.JPG'],
+  she: ['photos/she1.jpg', 'photos/she2.jpg'],
+  we:  ['photos/we.jpeg', 'photos/we1.jpeg', 'photos/we5.jpg', 'photos/we11.jpg', 'photos/we13.jpg', 'photos/we14.jpg', 'photos/we15.jpeg'],
 };
 
 let currentSheAvatar = PHOTOS.she[0];
