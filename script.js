@@ -255,7 +255,7 @@ function makeNoButtonEscape(btn) {
       btn.style.margin   = '0';
       btn.style.position = 'fixed';
       btn.style.zIndex   = '99999';
-      btn.style.width    = r.width + 'px';
+      btn.classList.add('btn-no--flee');
       document.body.appendChild(btn);
       gsap.set(btn, { left: r.left, top: r.top, scale: 1, rotation: 0 });
     }
@@ -528,11 +528,11 @@ async function runIntro() {
     noJokes: [
       {
         me:  'Не правильна відповідь 😄 давай ще раз, нечемна 😂',
-        she: 'Ха-ха ладно ладно 😂❤️ слухаю Котусика!',
+        she: 'Ха-ха ладно ладно 😂❤️ слухаю Котусика! 🥰',
       },
       {
-        me:  'Окей я можу й сам собі запропонувати 🤷',
-        she: 'СТОП 😂😂 Так Так Так!!',
+        me:  'Окей я можу й сам собі запропонувати 🤷 😄',
+        she: 'СТОП 😂😂 Так Так Так!! 🥰',
         hideNo: true,
       },
     ],
@@ -554,11 +554,11 @@ async function runStory() {
   await waitForYes({
     yesTxt: 'Що? 😏',
     noTxt:  'Ой, не зараз...',
-    sheResponse: 'Що, котусику??? 🥰🤔',
+    sheResponse: 'Що, котусику?? 🥰🤔',
     noJokes: [
       {
         me:  'Ну окей... посиджу тут з моїм секретом 🙃',
-        she: 'СТОП 😂 що там, котусику??? давай розказуй!! 😏',
+        she: 'СТОП 😂 що там, котусику?? давай розказуй! 😏',
         hideNo: true,
       },
     ],
@@ -592,13 +592,14 @@ async function runStory() {
 }
 
 /* ===================================================
-   waitForFinalYes — 3 кліки: вібрація+ріст, 3-й — займається
+   waitForFinalYes — тапай допоки не вибухне 🔥💥
    =================================================== */
 function waitForFinalYes({ noTxt, noJokes, sheResponse } = {}) {
   return new Promise(async (resolve) => {
     let noIdx     = 0;
     let typingEl  = null;
     let currentNo = null;
+    const TAPS    = 12;
 
     function cleanupNo() {
       if (currentNo) { resetBtnPosition(currentNo); currentNo = null; }
@@ -614,12 +615,11 @@ function waitForFinalYes({ noTxt, noJokes, sheResponse } = {}) {
       cleanupNo();
       actionEl.innerHTML = '';
 
-      let clicks = 0;
-      const yesLabels = ['Так 💍', 'Ще раз! 💍', 'Останній раз! 💍'];
+      let tapCount = 0;
 
       const yesBtn = document.createElement('button');
       yesBtn.className = 'btn btn-yes';
-      yesBtn.textContent = yesLabels[0];
+      yesBtn.textContent = 'Так 💍';
       actionEl.appendChild(yesBtn);
 
       gsap.fromTo(yesBtn,
@@ -628,66 +628,89 @@ function waitForFinalYes({ noTxt, noJokes, sheResponse } = {}) {
       );
 
       yesBtn.addEventListener('click', async () => {
-        clicks++;
+        if (yesBtn.dataset.exploding) return;
+        tapCount++;
+        const progress = tapCount / TAPS;
 
-        if (clicks < 3) {
-          /* Прибираємо Ні одразу і центруємо Так */
+        /* Перший тап — прибираємо Ні і центруємо кнопку */
+        if (tapCount === 1) {
           cleanupNo();
           actionEl.innerHTML = '';
           actionEl.appendChild(yesBtn);
+        }
 
-          yesBtn.textContent = yesLabels[clicks];
-
-          /* Вібрація */
-          gsap.fromTo(yesBtn, { x: -9 }, {
-            x: 9, duration: 0.05, ease: 'none',
-            yoyo: true, repeat: 9,
-            onComplete: () => gsap.set(yesBtn, { x: 0 }),
-          });
-
-          /* Ріст + посилення glow */
-          gsap.to(yesBtn, {
-            scale: 1 + clicks * 0.1,
-            boxShadow: `0 4px ${24 + clicks * 20}px rgba(16,185,129,${0.5 + clicks * 0.25})`,
-            duration: 0.3,
-            ease: 'back.out(2)',
-            overwrite: false,
-          });
-
+        /* Колір: зелений → помаранчевий → червоний */
+        let r, g, b;
+        if (progress < 0.5) {
+          const t = progress * 2;
+          r = Math.round(16  + (249 - 16)  * t);
+          g = Math.round(185 + (115 - 185) * t);
+          b = Math.round(129 + (22  - 129) * t);
         } else {
-          /* 3-й клік — IGNITE 🔥💥 */
+          const t = (progress - 0.5) * 2;
+          r = Math.round(249 + (239 - 249) * t);
+          g = Math.round(115 + (68  - 115) * t);
+          b = Math.round(22  + (68  - 22)  * t);
+        }
+
+        /* Лейбл */
+        if (progress > 0.75)      yesBtn.textContent = '🔥💍💥🔥';
+        else if (progress > 0.5)  yesBtn.textContent = 'Майже! 💍💥';
+        else if (progress > 0.25) yesBtn.textContent = 'Ще! 💍🔥';
+
+        /* Тряска — сильніша з кожним тапом */
+        const shakeAmt = 4 + progress * 14;
+        const shakeRep = Math.round(4 + progress * 8);
+        gsap.fromTo(yesBtn, { x: -shakeAmt }, {
+          x: shakeAmt, duration: 0.04, ease: 'none',
+          yoyo: true, repeat: shakeRep,
+          onComplete: () => gsap.set(yesBtn, { x: 0 }),
+        });
+
+        /* Масштаб і колір — плавно накопичуються */
+        const scale = 1 + progress * 0.85;
+        const glow  = 8 + progress * 65;
+        const glowA = 0.35 + progress * 0.65;
+        gsap.to(yesBtn, {
+          scale,
+          background: `linear-gradient(135deg,rgb(${r},${g},${b}) 0%,rgb(${Math.round(r*.7)},${Math.round(g*.55)},${Math.round(b*.55)}) 100%)`,
+          boxShadow: `0 4px ${glow}px rgba(${r},${g},${b},${glowA})`,
+          duration: 0.22,
+          ease: 'power2.out',
+          overwrite: false,
+        });
+
+        /* Вогонь з'являється після 40% тапів */
+        if (progress > 0.4) spawnFlames(yesBtn);
+
+        /* ВИБУХ після останнього тапу */
+        if (tapCount >= TAPS) {
+          yesBtn.dataset.exploding = '1';
           yesBtn.style.pointerEvents = 'none';
-          cleanupNo();
 
-          /* Фаза 1: почервоніння + збільшення з bounce */
           gsap.to(yesBtn, {
-            scale: 1.5,
+            scale: 2.2,
             background: 'linear-gradient(135deg,#ef4444 0%,#b91c1c 100%)',
-            boxShadow: '0 4px 40px rgba(239,68,68,.9)',
-            duration: 0.55,
+            boxShadow: '0 4px 60px rgba(239,68,68,1)',
+            duration: 0.35,
             ease: 'back.out(2)',
+            overwrite: true,
             onComplete() {
-
-              /* Фаза 2: полум'я — тряска + 🔥 + розпечений glow (1s) */
               spawnFlames(yesBtn);
-              gsap.fromTo(yesBtn, { x: -9 }, {
-                x: 9, duration: 0.06, ease: 'none',
-                yoyo: true, repeat: 15,
+              gsap.fromTo(yesBtn, { x: -10 }, {
+                x: 10, duration: 0.05, ease: 'none',
+                yoyo: true, repeat: 17,
                 onComplete: () => gsap.set(yesBtn, { x: 0 }),
               });
-              /* Кнопка поступово виростає під час вогню */
               gsap.to(yesBtn, {
-                scale: 3.0,
-                boxShadow: '0 0 70px rgba(251,146,60,1), 0 0 120px rgba(239,68,68,.95)',
-                duration: 1.1,
+                scale: 3.2,
+                boxShadow: '0 0 80px rgba(251,146,60,1), 0 0 140px rgba(239,68,68,.95)',
+                duration: 0.9,
                 ease: 'power1.in',
                 onComplete() {
-
-                  /* Фаза 3: РОЗРИВ — спалах, кнопка зникає, серця летять плавно */
                   const bRect = yesBtn.getBoundingClientRect();
                   gsap.to(yesBtn, {
                     filter: 'brightness(9)',
-                    boxShadow: '0 0 140px rgba(251,191,36,1), 0 0 240px rgba(239,68,68,1)',
                     duration: 0.18,
                     ease: 'power3.in',
                     onComplete() {
@@ -700,19 +723,15 @@ function waitForFinalYes({ noTxt, noJokes, sheResponse } = {}) {
                         onComplete: async () => {
                           actionEl.innerHTML = '';
                           typingEl = null;
-                          /* Чекаємо поки всі серця долетять */
                           await sleep(3400);
                           if (sheResponse) {
                             const msgRow = await addMsg({ from: 'she', text: sheResponse, typingMs: 300, preDelay: 80 });
-                            /* Святкова анімація фінального повідомлення */
                             const bubble = msgRow?.querySelector('.msg-bubble');
                             if (bubble) {
-                              /* Bounce: бульбашка підскакує і повертається */
                               gsap.fromTo(bubble,
                                 { scale: 0.6, y: 20, rotation: -6 },
                                 { scale: 1, y: 0, rotation: 0, duration: 0.75, ease: 'elastic.out(1.4, 0.45)' }
                               );
-                              /* CSS пульс через клас — рожево-фіолетовий glow */
                               setTimeout(() => bubble.classList.add('bubble-celebrate'), 400);
                             }
                             await sleep(3000);
@@ -782,7 +801,7 @@ async function runProposal() {
   await waitForYes({
     yesTxt: 'Так, звісно 🥰',
     noTxt:  'Та ні...',
-    sheResponse: 'Та звісно ж, котусику 🥰 Що там за секретики? 🙈',
+    sheResponse: 'Та звісно ж, котусику 🥰 Що там за секретики? 🙈🙈',
     noJokes: [
       {
         me:  'Неправильна відповідь 😄 пробуй ще раз, нечемна 😂',
@@ -802,7 +821,7 @@ async function runProposal() {
     sheResponse: 'КОТУСИК ТАК ТАК ТАК 😭🥰❤️❤️❤️💍',
     noJokes: [
       {
-        me:  'Окей. Я зроблю вигляд що цього не було 😄 хоча кільце вже куплено... 😂',
+        me:  'Окей. Я зроблю вигляд що цього не було 😄 хоча кільце вже куплене... 😂',
         she: 'СТОП КОТУСИК 😂😂 не те клацнула!! 😘',
         hideNo: true,
       },

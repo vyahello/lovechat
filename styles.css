@@ -344,6 +344,7 @@ body {
   outline: none;
   user-select: none;
   -webkit-user-select: none;
+  touch-action: manipulation;
   transition: transform .18s ease, box-shadow .18s ease, opacity .18s ease;
   white-space: nowrap;
 }
@@ -374,6 +375,14 @@ body {
 .btn-no.is-fixed {
   position: fixed;
   z-index: 9999;
+}
+
+.btn-no--flee {
+  background: rgba(22, 14, 40, 0.95) !important;
+  color: #ffffff !important;
+  border: 2px solid rgba(248, 113, 113, 0.85) !important;
+  box-shadow: 0 4px 18px rgba(0,0,0,0.75), 0 0 14px rgba(248,113,113,0.45) !important;
+  white-space: nowrap;
 }
 
 /* pulse the yes button after a no escape */
