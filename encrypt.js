@@ -21,6 +21,12 @@ const ITERATIONS  = 100_000;
 const MAX_PX      = 1920;
 const QUALITY     = 82;
 
+/* Explicit extra rotation (degrees) for specific files, on top of EXIF auto-rotate */
+const EXTRA_ROTATE = {
+  'we.jpeg':  90,
+  'we1.jpeg': 90,
+};
+
 const toB64 = buf => Buffer.from(buf).toString('base64');
 
 function ask(q) {
@@ -48,8 +54,12 @@ async function encryptBuf(key, buf) {
 
 async function readPhoto(filePath) {
   if (!sharp) return fs.readFileSync(filePath);
-  const orig = fs.statSync(filePath).size;
-  const buf = await sharp(filePath)
+  const orig     = fs.statSync(filePath).size;
+  const filename = path.basename(filePath);
+  const extra    = EXTRA_ROTATE[filename] || 0;
+  let pipeline = sharp(filePath).rotate(); /* auto-apply EXIF orientation */
+  if (extra) pipeline = pipeline.rotate(extra);
+  const buf = await pipeline
     .resize(MAX_PX, MAX_PX, { fit: 'inside', withoutEnlargement: true })
     .jpeg({ quality: QUALITY, mozjpeg: true })
     .toBuffer();
