@@ -11,7 +11,19 @@
   <link rel="stylesheet" href="styles.css">
 </head>
 <body>
-  <div id="app">
+  <!-- Password gate — visible immediately, hidden for local dev via JS -->
+  <div id="password-gate" class="password-gate">
+    <div class="password-box">
+      <div class="password-lock">🔐</div>
+      <div class="password-title">Юстинка, введи пароль</div>
+      <input type="password" id="pg-input" class="password-input"
+             placeholder="••••••••" autocomplete="off" autocorrect="off">
+      <button id="pg-btn" class="password-btn">Відкрити чат ❤️</button>
+      <div id="pg-error" class="password-error"></div>
+    </div>
+  </div>
+
+  <div id="app" style="visibility:hidden">
 
     <!-- Starfield -->
     <div class="starfield" id="starfield"></div>
@@ -20,7 +32,7 @@
     <div class="chat-header" id="chat-header">
       <div class="header-back">←</div>
       <div class="header-avatar-wrap">
-        <img src="photos/me1.JPG" alt="Володя" class="header-avatar">
+        <img src="photos/me1.JPG" alt="" class="header-avatar">
         <span class="online-dot"></span>
       </div>
       <div class="header-info">
@@ -44,12 +56,12 @@
       <canvas id="confetti-canvas"></canvas>
       <div class="finale-content">
         <div class="finale-emoji" id="finale-emoji">💍</div>
-        <div class="finale-title" id="finale-title"><span>Ну все, ти попала</span> 😘💍</div>
+        <div class="finale-title" id="finale-title"></div>
         <div class="slideshow-container" id="slideshow-container">
           <div id="slideshow" class="slideshow"></div>
           <div class="slide-overlay"></div>
         </div>
-        <div class="finale-love" id="finale-love">Люблю тебе <span class="heart-beat">❤️</span></div>
+        <div class="finale-love" id="finale-love"></div>
       </div>
     </div>
 
@@ -58,99 +70,112 @@
   <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.5/gsap.min.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.9.3/dist/confetti.browser.min.js"></script>
   <script src="data.enc.js"></script>
-  <script src="script.js"></script>
+
   <script>
-  /* ----- PASSWORD GATE (runs only when data.enc.js is present) ----- */
-  if (typeof ENC !== 'undefined') {
-    /* Inject overlay */
-    const _gate = document.createElement('div');
-    _gate.id = 'password-gate';
-    _gate.className = 'password-gate';
-    _gate.innerHTML = `
-      <div class="password-box">
-        <div class="password-lock">🔐</div>
-        <div class="password-title">Юстинка, введи пароль</div>
-        <input type="password" id="pg-input" class="password-input"
-               placeholder="••••••••" autocomplete="off" autocorrect="off">
-        <button id="pg-btn" class="password-btn">Відкрити чат ❤️</button>
-        <div id="pg-error" class="password-error"></div>
-      </div>`;
-    document.body.appendChild(_gate);
+  /* ----- BOOTSTRAP ----- */
+  if (typeof ENC === 'undefined') {
+    /* Local dev: no encryption — hide gate, show app, load script.js */
+    document.getElementById('password-gate').style.display = 'none';
+    document.getElementById('app').style.visibility = '';
+    var _s = document.createElement('script');
+    _s.src = 'script.js';
+    document.head.appendChild(_s);
+  } else {
+    /* Production: gate already in HTML — decrypt and blob-load script.js */
+    (function () {
+      const _gate = document.getElementById('password-gate');
 
-    function _fromB64(s) {
-      const b = atob(s), a = new Uint8Array(b.length);
-      for (let i = 0; i < b.length; i++) a[i] = b.charCodeAt(i);
-      return a;
-    }
-    function _bufToB64(buf) {
-      const a = new Uint8Array(buf); let s = '';
-      for (let i = 0; i < a.length; i += 8192)
-        s += String.fromCharCode(...a.subarray(i, i + 8192));
-      return btoa(s);
-    }
-    function _mime(name) {
-      return /\.png$/i.test(name) ? 'image/png'
-           : /\.gif$/i.test(name) ? 'image/gif'
-           : /\.webp$/i.test(name) ? 'image/webp'
-           : 'image/jpeg';
-    }
-    async function _deriveKey(pw, salt) {
-      const raw = await crypto.subtle.importKey(
-        'raw', new TextEncoder().encode(pw), 'PBKDF2', false, ['deriveKey']);
-      return crypto.subtle.deriveKey(
-        { name: 'PBKDF2', salt, iterations: 250000, hash: 'SHA-256' },
-        raw, { name: 'AES-GCM', length: 256 }, false, ['decrypt']);
-    }
-    async function _tryUnlock(pw) {
-      const salt = _fromB64(ENC.salt);
-      const key  = await _deriveKey(pw, salt);
-      const map  = {};
-      for (const [name, { iv, data }] of Object.entries(ENC.photos)) {
-        const plain = await crypto.subtle.decrypt(
-          { name: 'AES-GCM', iv: _fromB64(iv) }, key, _fromB64(data));
-        map[name] = `data:${_mime(name)};base64,${_bufToB64(plain)}`;
+      function _fromB64(s) {
+        const b = atob(s), a = new Uint8Array(b.length);
+        for (let i = 0; i < b.length; i++) a[i] = b.charCodeAt(i);
+        return a;
       }
-      return map;
-    }
-
-    const _input = document.getElementById('pg-input');
-    const _btn   = document.getElementById('pg-btn');
-    const _err   = document.getElementById('pg-error');
-
-    async function _submit() {
-      const pw = _input.value;
-      if (!pw) {
-        _err.textContent = 'Пароль не може бути порожнім, хитруля 😄';
-        _input.focus();
-        return;
+      function _bufToB64(buf) {
+        const a = new Uint8Array(buf); let s = '';
+        for (let i = 0; i < a.length; i += 8192)
+          s += String.fromCharCode(...a.subarray(i, i + 8192));
+        return btoa(s);
       }
-      _btn.disabled = true;
-      _btn.textContent = 'Відкриваю наш чат...';
-      _err.textContent = '';
-      try {
-        const urlMap = await _tryUnlock(pw);
-        /* Inject decrypted data-URLs into PHOTOS */
-        for (const g of Object.keys(PHOTOS))
-          PHOTOS[g] = PHOTOS[g].map(p => urlMap[p.split('/').pop()] || p);
-        /* Update header avatar */
-        const ha = document.querySelector('.header-avatar');
-        if (ha) ha.src = urlMap[ha.getAttribute('src').split('/').pop()] || ha.src;
-        /* Fade gate out and start */
-        _gate.style.transition = 'opacity 0.55s';
-        _gate.style.opacity = '0';
-        setTimeout(() => { _gate.remove(); init(); }, 580);
-      } catch {
-        _btn.disabled = false;
-        _btn.textContent = 'Відкрити ❤️';
-        _err.textContent = 'Невірний пароль 🙈';
-        _input.value = '';
-        _input.focus();
+      function _mime(name) {
+        return /\.png$/i.test(name) ? 'image/png'
+             : /\.gif$/i.test(name) ? 'image/gif'
+             : /\.webp$/i.test(name) ? 'image/webp'
+             : 'image/jpeg';
       }
-    }
+      async function _deriveKey(pw, salt) {
+        const raw = await crypto.subtle.importKey(
+          'raw', new TextEncoder().encode(pw), 'PBKDF2', false, ['deriveKey']);
+        return crypto.subtle.deriveKey(
+          { name: 'PBKDF2', salt, iterations: 250000, hash: 'SHA-256' },
+          raw, { name: 'AES-GCM', length: 256 }, false, ['decrypt']);
+      }
+      async function _tryUnlock(pw) {
+        const salt = _fromB64(ENC.salt);
+        const key  = await _deriveKey(pw, salt);
+        /* Decrypt photos */
+        const urlMap = {};
+        for (const [name, { iv, data }] of Object.entries(ENC.photos)) {
+          const plain = await crypto.subtle.decrypt(
+            { name: 'AES-GCM', iv: _fromB64(iv) }, key, _fromB64(data));
+          urlMap[name] = `data:${_mime(name)};base64,${_bufToB64(plain)}`;
+        }
+        /* Decrypt script.js */
+        const { iv: sIv, data: sData } = ENC.scripts['script.js'];
+        const scriptBuf = await crypto.subtle.decrypt(
+          { name: 'AES-GCM', iv: _fromB64(sIv) }, key, _fromB64(sData));
+        const scriptText = new TextDecoder().decode(scriptBuf);
+        return { urlMap, scriptText };
+      }
 
-    _btn.addEventListener('click', _submit);
-    _input.addEventListener('keydown', e => { if (e.key === 'Enter') _submit(); });
-    setTimeout(() => _input.focus(), 400);
+      const _input = document.getElementById('pg-input');
+      const _btn   = document.getElementById('pg-btn');
+      const _err   = document.getElementById('pg-error');
+
+      async function _submit() {
+        const pw = _input.value;
+        if (!pw) {
+          _err.textContent = 'Пароль не може бути порожнім, хитруля 😄';
+          _input.focus();
+          return;
+        }
+        _btn.disabled = true;
+        _btn.textContent = 'Відкриваю наш чат...';
+        _err.textContent = '';
+        try {
+          const { urlMap, scriptText } = await _tryUnlock(pw);
+          /* Blob-load decrypted script.js */
+          const blob    = new Blob([scriptText], { type: 'application/javascript' });
+          const blobUrl = URL.createObjectURL(blob);
+          const s = document.createElement('script');
+          s.src = blobUrl;
+          s.onload = () => {
+            URL.revokeObjectURL(blobUrl);
+            /* Inject decrypted photo data-URLs */
+            for (const g of Object.keys(PHOTOS))
+              PHOTOS[g] = PHOTOS[g].map(p => urlMap[p.split('/').pop()] || p);
+            /* Update header avatar */
+            const ha = document.querySelector('.header-avatar');
+            if (ha) ha.src = urlMap[ha.getAttribute('src').split('/').pop()] || ha.src;
+            /* Show app, fade gate out, start */
+            document.getElementById('app').style.visibility = '';
+            _gate.style.transition = 'opacity 0.55s';
+            _gate.style.opacity = '0';
+            setTimeout(() => { _gate.remove(); init(); }, 580);
+          };
+          document.head.appendChild(s);
+        } catch {
+          _btn.disabled = false;
+          _btn.textContent = 'Відкрити ❤️';
+          _err.textContent = 'Невірний пароль 🙈';
+          _input.value = '';
+          _input.focus();
+        }
+      }
+
+      _btn.addEventListener('click', _submit);
+      _input.addEventListener('keydown', e => { if (e.key === 'Enter') _submit(); });
+      setTimeout(() => _input.focus(), 400);
+    })();
   }
   </script>
 </body>
