@@ -2,7 +2,7 @@
    PROPOSAL SITE — styles.css
    ===================================================== */
 
-/* ----- PASSWORD GATE ----- */
+/* ----- QUIZ GATE ----- */
 .password-gate {
   position: fixed;
   inset: 0;
@@ -11,65 +11,195 @@
   align-items: center;
   justify-content: center;
   background: radial-gradient(ellipse at 50% 60%, #1a0d2e 0%, #0c0b1d 70%);
+  overflow: hidden;
 }
-.password-box {
+
+/* Floating hearts background */
+.pg-bg-hearts {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  z-index: 0;
+}
+.pg-heart {
+  position: absolute;
+  animation: pg-heart-float var(--d, 4s) ease-in-out infinite var(--del, 0s);
+  opacity: 0.15;
+  user-select: none;
+}
+@keyframes pg-heart-float {
+  0%, 100% { transform: translateY(0)    rotate(-10deg) scale(1);    }
+  50%       { transform: translateY(-22px) rotate(10deg)  scale(1.08); }
+}
+
+/* Scene box */
+.pg-box {
+  position: relative;
+  z-index: 1;
   display: flex;
   flex-direction: column;
   align-items: center;
-  gap: 16px;
-  padding: 40px 32px;
-  background: rgba(255,255,255,.04);
-  border: 1px solid rgba(255,255,255,.10);
-  border-radius: 24px;
-  width: min(340px, 88vw);
-  box-shadow: 0 20px 60px rgba(0,0,0,.5);
+  gap: 14px;
+  padding: 36px 28px 26px;
+  background: rgba(255,255,255,.045);
+  border: 1px solid rgba(255,255,255,.11);
+  border-radius: 28px;
+  width: min(360px, 92vw);
+  box-shadow: 0 24px 64px rgba(0,0,0,.55), 0 0 0 1px rgba(99,102,241,.12);
 }
-.password-lock { font-size: 48px; }
-.password-title {
-  font-family: var(--font, 'Inter', sans-serif);
-  font-size: 18px;
+.pg-scene-hidden { display: none !important; }
+
+/* Badge */
+.pg-badge {
+  font-size: 11px;
+  font-family: var(--font);
   font-weight: 600;
+  letter-spacing: .06em;
+  text-transform: uppercase;
+  color: #818cf8;
+  background: rgba(99,102,241,.13);
+  padding: 4px 14px;
+  border-radius: 20px;
+}
+
+/* Emoji */
+.pg-emoji {
+  font-size: 52px;
+  line-height: 1;
+  filter: drop-shadow(0 4px 14px rgba(244,114,182,.4));
+}
+
+/* Titles */
+.pg-title {
+  font-family: var(--font);
+  font-size: 17px;
+  font-weight: 700;
   color: #e2e8f0;
-  letter-spacing: .01em;
-}
-.password-input {
-  width: 100%;
-  height: 48px;
-  padding: 0 16px;
-  background: rgba(255,255,255,.07);
-  border: 1px solid rgba(255,255,255,.15);
-  border-radius: 12px;
-  color: #f1f5f9;
-  font-size: 15px;
-  font-family: var(--font, 'Inter', sans-serif);
-  outline: none;
   text-align: center;
-  letter-spacing: .05em;
-  box-sizing: border-box;
-  touch-action: manipulation;
 }
-.password-input:focus { border-color: rgba(99,102,241,.7); }
-.password-btn {
+.pg-q {
+  font-family: var(--font);
+  font-size: 14px;
+  font-weight: 500;
+  color: #a5b4fc;
+  text-align: center;
+  line-height: 1.5;
+}
+
+/* Date row */
+.pg-date-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-top: 2px;
+}
+.pg-date-col {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 6px;
+}
+.pg-din {
+  width: 58px;
+  height: 54px;
+  text-align: center;
+  background: rgba(255,255,255,.07);
+  border: 1.5px solid rgba(255,255,255,.16);
+  border-radius: 14px;
+  color: #f1f5f9;
+  font-size: 20px;
+  font-weight: 700;
+  font-family: var(--font);
+  outline: none;
+  touch-action: manipulation;
+  transition: border-color .2s, background .2s;
+  /* remove number spinners */
+  -moz-appearance: textfield;
+}
+.pg-din::-webkit-inner-spin-button,
+.pg-din::-webkit-outer-spin-button { -webkit-appearance: none; }
+.pg-din:focus {
+  border-color: rgba(99,102,241,.85);
+  background: rgba(99,102,241,.1);
+}
+.pg-din-y { width: 82px; font-size: 18px; }
+.pg-dlbl {
+  font-size: 11px;
+  color: var(--text-muted);
+  font-family: var(--font);
+  font-weight: 500;
+}
+.pg-dsep {
+  font-size: 26px;
+  color: rgba(255,255,255,.22);
+  font-weight: 300;
+  margin-bottom: 20px;
+}
+
+/* Text input (venue) */
+.pg-tin {
   width: 100%;
   height: 50px;
+  padding: 0 18px;
+  background: rgba(255,255,255,.07);
+  border: 1.5px solid rgba(255,255,255,.16);
+  border-radius: 14px;
+  color: #f1f5f9;
+  font-size: 16px;
+  font-family: var(--font);
+  outline: none;
+  text-align: center;
+  box-sizing: border-box;
+  touch-action: manipulation;
+  transition: border-color .2s, background .2s;
+}
+.pg-tin:focus {
+  border-color: rgba(99,102,241,.85);
+  background: rgba(99,102,241,.08);
+}
+
+/* Primary button */
+.pg-btn {
+  width: 100%;
+  height: 52px;
   border: none;
   border-radius: 50px;
   background: linear-gradient(135deg, #6366f1 0%, #8b5cf6 100%);
   color: #fff;
   font-size: 16px;
   font-weight: 600;
-  font-family: var(--font, 'Inter', sans-serif);
+  font-family: var(--font);
   cursor: pointer;
   touch-action: manipulation;
-  box-shadow: 0 4px 20px rgba(99,102,241,.45);
-  transition: opacity .2s;
+  box-shadow: 0 4px 22px rgba(99,102,241,.5);
+  transition: transform .15s, opacity .2s;
+  margin-top: 4px;
 }
-.password-btn:disabled { opacity: .55; cursor: default; }
-.password-error {
-  font-family: var(--font, 'Inter', sans-serif);
-  font-size: 14px;
+.pg-btn:hover  { transform: scale(1.025); }
+.pg-btn:active { transform: scale(.97); }
+.pg-btn:disabled { opacity: .55; cursor: default; transform: none; }
+
+/* Back link */
+.pg-bkbtn {
+  background: none;
+  border: none;
+  color: var(--text-muted);
+  font-size: 13px;
+  font-family: var(--font);
+  cursor: pointer;
+  padding: 2px 8px;
+  touch-action: manipulation;
+  transition: color .2s;
+}
+.pg-bkbtn:hover { color: #a5b4fc; }
+
+/* Error */
+.pg-err {
+  font-family: var(--font);
+  font-size: 13px;
   color: #f87171;
-  min-height: 18px;
+  min-height: 16px;
+  text-align: center;
 }
 
 /* ----- RESET & BASE ----- */

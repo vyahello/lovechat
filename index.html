@@ -11,15 +11,46 @@
   <link rel="stylesheet" href="styles.css">
 </head>
 <body>
-  <!-- Password gate — always in HTML, hidden for local dev via JS -->
+  <!-- Quiz gate — always in HTML, hidden for local dev via JS -->
   <div id="password-gate" class="password-gate">
-    <div class="password-box">
-      <div class="password-lock">🔐</div>
-      <div class="password-title">Юстинка, введи пароль</div>
-      <input type="password" id="pg-input" class="password-input"
-             placeholder="••••••••" autocomplete="off" autocorrect="off">
-      <button id="pg-btn" class="password-btn">Відкрити чат ❤️</button>
-      <div id="pg-error" class="password-error"></div>
+    <div class="pg-bg-hearts" id="pg-bg-hearts"></div>
+
+    <!-- Scene 1: Date -->
+    <div id="pg-s1" class="pg-box">
+      <div class="pg-badge">🔐 Крок 1 з 2</div>
+      <div class="pg-emoji" id="pg-emo-1">🗓️</div>
+      <div class="pg-title">Юстинка, невеликий тест! 😏</div>
+      <div class="pg-q">Коли ми вперше зустрілись? 🙂</div>
+      <div class="pg-date-row">
+        <div class="pg-date-col">
+          <input id="pg-d" class="pg-din" type="tel" inputmode="numeric" placeholder="ДД" maxlength="2" autocomplete="off">
+          <span class="pg-dlbl">день</span>
+        </div>
+        <span class="pg-dsep">/</span>
+        <div class="pg-date-col">
+          <input id="pg-m" class="pg-din" type="tel" inputmode="numeric" placeholder="ММ" maxlength="2" autocomplete="off">
+          <span class="pg-dlbl">місяць</span>
+        </div>
+        <span class="pg-dsep">/</span>
+        <div class="pg-date-col">
+          <input id="pg-y" class="pg-din pg-din-y" type="tel" inputmode="numeric" placeholder="РРРР" maxlength="4" autocomplete="off">
+          <span class="pg-dlbl">рік</span>
+        </div>
+      </div>
+      <button id="pg-b1" class="pg-btn">Далі →</button>
+      <div id="pg-e1" class="pg-err"></div>
+    </div>
+
+    <!-- Scene 2: Venue -->
+    <div id="pg-s2" class="pg-box pg-scene-hidden">
+      <div class="pg-badge">✨ Крок 2 з 2</div>
+      <div class="pg-emoji" id="pg-emo-2">☕</div>
+      <div class="pg-title">Вже майже! 🎉</div>
+      <div class="pg-q">В якому закладі ми були? 😏</div>
+      <input id="pg-v" class="pg-tin" type="text" placeholder="назва закладу"
+             autocomplete="off" autocorrect="off" spellcheck="false">
+      <button id="pg-b2" class="pg-btn">Відкрити чат ❤️</button>
+      <div id="pg-e2" class="pg-err"></div>
     </div>
   </div>
 
@@ -75,24 +106,26 @@
   <script>
   /* ----- BOOTSTRAP ----- */
   if (typeof _ENC === 'undefined') {
-    /* Local dev: no encryption — hide gate, show app, load script.js directly */
+    /* Local dev: hide gate, show app, load script.js directly */
     document.getElementById('password-gate').style.display = 'none';
     document.getElementById('app').style.visibility = '';
     var _s = document.createElement('script');
     _s.src = 'script.js';
     document.head.appendChild(_s);
   } else {
-    /* Production: start fetching data.enc immediately in background */
+    /* Production: 2-scene quiz gate
+       Password = DDMMYYYY + venue.toLowerCase().trim()
+    */
     (function () {
       const _gate = document.getElementById('password-gate');
 
-      /* Fetch starts NOW — while user sees gate and types password */
+      /* Fetch starts NOW — in background while user goes through scenes */
       const _encData = fetch('data.enc').then(r => {
         if (!r.ok) throw new Error('fetch failed');
         return r.arrayBuffer();
       });
 
-      /* Parse binary format: ENC1 + salt(16) + entries[keyLen(2)+key+iv(12)+dataLen(4)+data] */
+      /* Binary parser: ENC1 + salt(16) + entries[keyLen(2)+key+iv(12)+dataLen(4)+data] */
       function _parse(buf) {
         const view = new DataView(buf);
         if (new TextDecoder().decode(new Uint8Array(buf, 0, 4)) !== 'ENC1')
@@ -126,68 +159,209 @@
           raw, { name: 'AES-GCM', length: 256 }, false, ['decrypt']);
       }
 
-      const _input = document.getElementById('pg-input');
-      const _btn   = document.getElementById('pg-btn');
-      const _err   = document.getElementById('pg-error');
+      /* Parse once, reuse in both steps */
+      const _parsed = _encData.then(buf => _parse(buf));
 
-      async function _submit() {
-        const pw = _input.value;
-        if (!pw) {
-          _err.textContent = 'Пароль не може бути порожнім, хитруля 😄';
-          _input.focus();
-          return;
+      /* Step 1 crypto: validate date against __date_check__ entry */
+      async function _checkDate(dateStr) {
+        const { salt, entries } = await _parsed;
+        const dc = entries['__date_check__'];
+        if (!dc) return; /* old bundle without check — skip */
+        const key = await _deriveKey(dateStr, salt);
+        await crypto.subtle.decrypt({ name: 'AES-GCM', iv: dc.iv }, key, dc.data);
+        /* throws if wrong key → date is invalid */
+      }
+
+      /* Step 2: decrypt photos + script and launch the app */
+      async function _unlock(pw) {
+        const { salt, entries } = await _parsed;
+        const key = await _deriveKey(pw, salt);
+
+        const urlMap = {};
+        for (const [name, { iv, data }] of Object.entries(entries)) {
+          if (name === 'script.js' || name === '__date_check__') continue;
+          const plain = await crypto.subtle.decrypt({ name: 'AES-GCM', iv }, key, data);
+          urlMap[name] = URL.createObjectURL(new Blob([plain], { type: _mime(name) }));
         }
-        _btn.disabled = true;
-        _btn.textContent = 'Відкриваю наш чат...';
-        _err.textContent = '';
+
+        const se = entries['script.js'];
+        const scriptBuf = await crypto.subtle.decrypt({ name: 'AES-GCM', iv: se.iv }, key, se.data);
+        const scriptText = new TextDecoder().decode(scriptBuf);
+
+        const blob    = new Blob([scriptText], { type: 'application/javascript' });
+        const blobUrl = URL.createObjectURL(blob);
+        const s = document.createElement('script');
+        s.src = blobUrl;
+        s.onload = () => {
+          URL.revokeObjectURL(blobUrl);
+          for (const g of Object.keys(PHOTOS))
+            PHOTOS[g] = PHOTOS[g].map(p => urlMap[p.split('/').pop()] || p);
+          const ha = document.querySelector('.header-avatar');
+          if (ha) ha.src = urlMap[ha.getAttribute('src').split('/').pop()] || ha.src;
+          document.getElementById('app').style.visibility = '';
+          _gate.style.transition = 'opacity 0.6s';
+          _gate.style.opacity = '0';
+          setTimeout(() => { _gate.remove(); init(); }, 630);
+        };
+        document.head.appendChild(s);
+      }
+
+      /* ---- UI elements ---- */
+      const _s1  = document.getElementById('pg-s1');
+      const _s2  = document.getElementById('pg-s2');
+      const _b1  = document.getElementById('pg-b1');
+      const _b2  = document.getElementById('pg-b2');
+      const _e1  = document.getElementById('pg-e1');
+      const _e2  = document.getElementById('pg-e2');
+      const _pd  = document.getElementById('pg-d');
+      const _pm  = document.getElementById('pg-m');
+      const _py  = document.getElementById('pg-y');
+      const _pv  = document.getElementById('pg-v');
+
+      let _dateStr  = '';
+      let _errCount = 0;
+
+      /* ---- Helpers ---- */
+      function _shake(el) {
+        gsap.killTweensOf(el, 'x');
+        gsap.fromTo(el, { x: -10 }, {
+          x: 10, duration: 0.06, ease: 'none',
+          yoyo: true, repeat: 7,
+          onComplete: () => gsap.set(el, { x: 0 }),
+        });
+      }
+
+      function _floatEmoji(id) {
+        const el = document.getElementById(id);
+        if (!el) return;
+        gsap.killTweensOf(el);
+        gsap.fromTo(el,
+          { scale: 0, rotation: -18 },
+          { scale: 1, rotation: 0, duration: 0.48, ease: 'back.out(2.6)', delay: 0.12 }
+        );
+        gsap.to(el, { y: -9, duration: 1.9, ease: 'sine.inOut', yoyo: true, repeat: -1, delay: 0.65 });
+      }
+
+      /* ---- Background floating hearts ---- */
+      (function _spawnHearts() {
+        const c   = document.getElementById('pg-bg-hearts');
+        if (!c) return;
+        const pool = ['❤️','💕','💖','💗','🩷','💝'];
+        for (let i = 0; i < 14; i++) {
+          const el  = document.createElement('div');
+          el.className = 'pg-heart';
+          el.textContent = pool[Math.floor(Math.random() * pool.length)];
+          const size = 16 + Math.random() * 22;
+          const dur  = 3 + Math.random() * 3.5;
+          el.style.cssText = [
+            `left:${4 + Math.random() * 92}%`,
+            `top:${10 + Math.random() * 80}%`,
+            `font-size:${size}px`,
+            `--d:${dur.toFixed(1)}s`,
+            `--del:${(-dur + Math.random() * dur).toFixed(1)}s`,
+          ].join(';');
+          c.appendChild(el);
+        }
+      })();
+
+      /* ---- Scene 1 entry ---- */
+      gsap.set(_s1, { opacity: 0, y: 48, scale: 0.9 });
+      gsap.to(_s1, { opacity: 1, y: 0, scale: 1, duration: 0.62, ease: 'back.out(1.9)', delay: 0.15 });
+      _floatEmoji('pg-emo-1');
+      setTimeout(() => _pd.focus(), 800);
+
+      /* Auto-advance date fields */
+      _pd.addEventListener('input', () => { if (_pd.value.length >= 2) _pm.focus(); });
+      _pm.addEventListener('input', () => { if (_pm.value.length >= 2) _py.focus(); });
+
+      /* ---- Scene 1 → Scene 2 transition ---- */
+      function _toScene2() {
+        _s2.classList.remove('pg-scene-hidden');
+        gsap.set(_s2, { opacity: 0, scale: 1.07, y: -20 });
+        gsap.to(_s1, { opacity: 0, scale: 0.88, y: 20, duration: 0.32, ease: 'power2.in',
+          onComplete: () => _s1.classList.add('pg-scene-hidden'),
+        });
+        gsap.to(_s2, { opacity: 1, scale: 1, y: 0, duration: 0.46, ease: 'back.out(1.7)', delay: 0.26 });
+        setTimeout(() => { _floatEmoji('pg-emo-2'); _pv.focus(); }, 680);
+      }
+
+      /* ---- Scene 2 → Scene 1 (back) ---- */
+      function _toScene1() {
+        _s1.classList.remove('pg-scene-hidden');
+        gsap.set(_s1, { opacity: 0, scale: 1.07, y: -20 });
+        gsap.to(_s2, { opacity: 0, scale: 0.88, y: 20, duration: 0.32, ease: 'power2.in',
+          onComplete: () => _s2.classList.add('pg-scene-hidden'),
+        });
+        gsap.to(_s1, { opacity: 1, scale: 1, y: 0, duration: 0.46, ease: 'back.out(1.7)', delay: 0.26 });
+        setTimeout(() => { _floatEmoji('pg-emo-1'); _py.focus(); }, 680);
+      }
+
+      /* ---- Scene 1 submit ---- */
+      async function _s1Next() {
+        const d = _pd.value.trim(), m = _pm.value.trim(), y = _py.value.trim();
+        if (!d || !m || !y) {
+          _e1.textContent = 'Введи день, місяць і рік 😅';
+          _shake(_s1); return;
+        }
+        const di = parseInt(d), mi = parseInt(m), yi = parseInt(y);
+        if (di < 1 || di > 31 || mi < 1 || mi > 12 || yi < 2000 || yi > 2099) {
+          _e1.textContent = 'Хм, така дата виглядає підозріло 🤔';
+          _shake(_s1); return;
+        }
+        const candidate = String(di).padStart(2,'0') + String(mi).padStart(2,'0') + String(yi);
+        _b1.disabled = true;
+        _b1.textContent = 'Перевіряю...';
+        _e1.textContent = '';
         try {
-          /* Wait for download (likely already done while user typed) */
-          const buf = await _encData;
-          const { salt, entries } = _parse(buf);
-          const key = await _deriveKey(pw, salt);
-
-          /* Decrypt photos → blob URLs (no base64 overhead) */
-          const urlMap = {};
-          for (const [name, { iv, data }] of Object.entries(entries)) {
-            if (name === 'script.js') continue;
-            const plain = await crypto.subtle.decrypt({ name: 'AES-GCM', iv }, key, data);
-            urlMap[name] = URL.createObjectURL(new Blob([plain], { type: _mime(name) }));
-          }
-
-          /* Decrypt script.js */
-          const se = entries['script.js'];
-          const scriptBuf = await crypto.subtle.decrypt({ name: 'AES-GCM', iv: se.iv }, key, se.data);
-          const scriptText = new TextDecoder().decode(scriptBuf);
-
-          /* Blob-load script.js */
-          const blob    = new Blob([scriptText], { type: 'application/javascript' });
-          const blobUrl = URL.createObjectURL(blob);
-          const s = document.createElement('script');
-          s.src = blobUrl;
-          s.onload = () => {
-            URL.revokeObjectURL(blobUrl);
-            for (const g of Object.keys(PHOTOS))
-              PHOTOS[g] = PHOTOS[g].map(p => urlMap[p.split('/').pop()] || p);
-            const ha = document.querySelector('.header-avatar');
-            if (ha) ha.src = urlMap[ha.getAttribute('src').split('/').pop()] || ha.src;
-            document.getElementById('app').style.visibility = '';
-            _gate.style.transition = 'opacity 0.55s';
-            _gate.style.opacity = '0';
-            setTimeout(() => { _gate.remove(); init(); }, 580);
-          };
-          document.head.appendChild(s);
+          await _checkDate(candidate);
+          _dateStr = candidate;
+          _b1.disabled = false;
+          _b1.textContent = 'Далі →';
+          _toScene2();
         } catch {
-          _btn.disabled = false;
-          _btn.textContent = 'Відкрити ❤️';
-          _err.textContent = 'Невірний пароль 🙈';
-          _input.value = '';
-          _input.focus();
+          _b1.disabled = false;
+          _b1.textContent = 'Далі →';
+          _e1.textContent = 'Невірна дата 🙈 Спробуй ще раз! 😅';
+          _pd.value = ''; _pm.value = ''; _py.value = '';
+          _shake(_s1);
+          _pd.focus();
         }
       }
 
-      _btn.addEventListener('click', _submit);
-      _input.addEventListener('keydown', e => { if (e.key === 'Enter') _submit(); });
-      setTimeout(() => _input.focus(), 400);
+      /* ---- Scene 2 submit ---- */
+      async function _s2Submit() {
+        const venue = _pv.value.trim();
+        if (!venue) {
+          _e2.textContent = 'Треба вписати назву закладу 😄';
+          _shake(_s2); return;
+        }
+        _b2.disabled = true;
+        _b2.textContent = 'Відкриваю наш чат...';
+        _e2.textContent = '';
+        try {
+          await _unlock(_dateStr + venue.toLowerCase());
+        } catch {
+          _errCount++;
+          _b2.disabled = false;
+          _b2.textContent = 'Відкрити чат ❤️';
+          _pv.value = '';
+          /* Date is correct — stay on scene 2, just retry the venue */
+          const hints = [
+            'Хм, не той заклад 🤔 Спробуй ще раз! 😄',
+            'Та ні... 😄 Ще раз, ти точно знаєш! 😄',
+            'Ти точно не памʼятаєш? 😂 Та ну!',
+          ];
+          _e2.textContent = hints[Math.min(_errCount - 1, hints.length - 1)];
+          _shake(_s2);
+          _pv.focus();
+        }
+      }
+
+      /* ---- Event listeners ---- */
+      _b1.addEventListener('click', _s1Next);
+      _b2.addEventListener('click', _s2Submit);
+      _py.addEventListener('keydown', e => { if (e.key === 'Enter') _s1Next(); });
+      _pv.addEventListener('keydown', e => { if (e.key === 'Enter') _s2Submit(); });
     })();
   }
   </script>

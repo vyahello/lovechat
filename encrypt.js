@@ -3,6 +3,10 @@
  * Compresses photos, then encrypts photos/ and script.js into data.enc (binary).
  * Also writes a tiny data.enc.js flag file (15 bytes) for production detection.
  *
+ * Asks for date (DDMMYYYY) and venue separately.
+ * Encrypts __date_check__ with date-only key so step-1 can validate the date.
+ * Encrypts everything else with date+venue combined key.
+ *
  * Usage:  npm install sharp && node encrypt.js
  */
 const { webcrypto } = require('crypto');
@@ -10,9 +14,6 @@ const subtle = webcrypto.subtle;
 const getRandomValues = buf => webcrypto.getRandomValues(buf);
 const fs   = require('fs');
 const path = require('path');
-const rl   = require('readline').createInterface({ input: process.stdin, output: process.stdout });
-let sharp;
-try { sharp = require('sharp'); } catch { sharp = null; }
 
 const PHOTOS_DIR   = './photos';
 const OUTPUT_BIN   = './data.enc';
@@ -21,12 +22,15 @@ const ITERATIONS   = 100_000;
 const MAX_PX       = 1920;
 const QUALITY      = 82;
 
-/* Explicit extra rotation for specific files (on top of EXIF auto-rotate) */
 const EXTRA_ROTATE = {};
 
 const MAGIC = Buffer.from('ENC1');
 
+let sharp;
+try { sharp = require('sharp'); } catch { sharp = null; }
+
 function ask(q) {
+  const rl = require('readline').createInterface({ input: process.stdin, output: process.stdout });
   return new Promise(r => rl.question(q, a => { rl.close(); r(a.trim()); }));
 }
 
@@ -76,21 +80,30 @@ async function readPhoto(filePath) {
 async function main() {
   if (!sharp) console.warn('⚠ sharp not installed — photos will not be compressed. Run: npm install sharp\n');
 
-  const password = await ask('Encryption password: ');
-  if (!password) { console.error('Password cannot be empty.'); process.exit(1); }
+  /* --- Ask for date and venue separately --- */
+  const dateStr = await ask('Date answer (DDMMYYYY, e.g. 15032023): ');
+  if (!dateStr) { console.error('Date cannot be empty.'); process.exit(1); }
+  if (!/^\d{8}$/.test(dateStr)) { console.error('Date must be exactly 8 digits: DDMMYYYY'); process.exit(1); }
 
-  const confirm = await new Promise(r => {
-    const r2 = require('readline').createInterface({ input: process.stdin, output: process.stdout });
-    r2.question('Confirm password: ', a => { r2.close(); r(a.trim()); });
-  });
-  if (password !== confirm) { console.error('Passwords do not match.'); process.exit(1); }
+  const venueStr = await ask('Venue answer (lowercase, as user will type it): ');
+  if (!venueStr) { console.error('Venue cannot be empty.'); process.exit(1); }
 
-  const salt = getRandomValues(new Uint8Array(16));
-  const key  = await deriveKey(password, salt);
+  const fullPassword = dateStr + venueStr.toLowerCase().trim();
+  console.log(`\nFull password: "${fullPassword}"`);
+
+  const salt    = getRandomValues(new Uint8Array(16));
+  const dateKey = await deriveKey(dateStr, salt);
+  const fullKey = await deriveKey(fullPassword, salt);
 
   const chunks = [MAGIC, Buffer.from(salt)];
 
-  /* Compress + encrypt photos */
+  /* __date_check__: encrypted with date-only key — lets step 1 validate the date */
+  console.log('\nAdding date check marker...');
+  const { iv: dcIv, data: dcData } = await encryptBuf(dateKey, Buffer.from('ok'));
+  chunks.push(makeEntry('__date_check__', dcIv, dcData));
+  console.log('  ✓ __date_check__');
+
+  /* Compress + encrypt photos with full key */
   const exts  = /\.(jpe?g|png|gif|webp)$/i;
   const files = fs.readdirSync(PHOTOS_DIR).filter(f => exts.test(f));
   if (!files.length) { console.error(`No images found in ${PHOTOS_DIR}/`); process.exit(1); }
@@ -99,25 +112,22 @@ async function main() {
   for (const file of files) {
     process.stdout.write(`  ✓ ${file}`);
     const raw = await readPhoto(path.join(PHOTOS_DIR, file));
-    const { iv, data } = await encryptBuf(key, raw);
+    const { iv, data } = await encryptBuf(fullKey, raw);
     chunks.push(makeEntry(file, iv, data));
     process.stdout.write('\n');
   }
 
-  /* Encrypt script.js */
+  /* Encrypt script.js with full key */
   if (!fs.existsSync('./script.js')) { console.error('script.js not found.'); process.exit(1); }
   console.log('\nEncrypting script.js...');
-  const { iv: sIv, data: sData } = await encryptBuf(key, Buffer.from(fs.readFileSync('./script.js', 'utf8'), 'utf8'));
+  const { iv: sIv, data: sData } = await encryptBuf(fullKey, Buffer.from(fs.readFileSync('./script.js', 'utf8'), 'utf8'));
   chunks.push(makeEntry('script.js', sIv, sData));
   console.log('  ✓ script.js');
 
-  /* Write binary output */
   const bin = Buffer.concat(chunks);
   fs.writeFileSync(OUTPUT_BIN, bin);
-  const sizeMB = (bin.length / 1024 / 1024).toFixed(1);
-  console.log(`\nDone → ${OUTPUT_BIN} (${sizeMB}MB)`);
+  console.log(`\nDone → ${OUTPUT_BIN} (${(bin.length/1024/1024).toFixed(1)}MB)`);
 
-  /* Write tiny flag file */
   fs.writeFileSync(OUTPUT_FLAG, 'const _ENC=1;');
   console.log(`     → ${OUTPUT_FLAG} (flag only)`);
 }
