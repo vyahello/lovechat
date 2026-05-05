@@ -22,10 +22,7 @@ const MAX_PX      = 1920;
 const QUALITY     = 82;
 
 /* Explicit extra rotation (degrees) for specific files, on top of EXIF auto-rotate */
-const EXTRA_ROTATE = {
-  'we.jpeg':  90,
-  'we1.jpeg': 90,
-};
+const EXTRA_ROTATE = {};
 
 const toB64 = buf => Buffer.from(buf).toString('base64');
 
