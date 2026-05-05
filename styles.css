@@ -40,11 +40,11 @@
   border: 1px solid rgba(255,255,255,.15);
   border-radius: 12px;
   color: #f1f5f9;
-  font-size: 18px;
+  font-size: 15px;
   font-family: var(--font, 'Inter', sans-serif);
   outline: none;
   text-align: center;
-  letter-spacing: .15em;
+  letter-spacing: .05em;
   box-sizing: border-box;
   touch-action: manipulation;
 }
