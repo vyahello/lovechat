@@ -1,4 +1,4 @@
-# Love chat (proposal)
+# Love chat
 
 ## Run locally
 

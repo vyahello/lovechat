@@ -2,6 +2,76 @@
    PROPOSAL SITE — styles.css
    ===================================================== */
 
+/* ----- PASSWORD GATE ----- */
+.password-gate {
+  position: fixed;
+  inset: 0;
+  z-index: 100000;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: radial-gradient(ellipse at 50% 60%, #1a0d2e 0%, #0c0b1d 70%);
+}
+.password-box {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 16px;
+  padding: 40px 32px;
+  background: rgba(255,255,255,.04);
+  border: 1px solid rgba(255,255,255,.10);
+  border-radius: 24px;
+  width: min(340px, 88vw);
+  box-shadow: 0 20px 60px rgba(0,0,0,.5);
+}
+.password-lock { font-size: 48px; }
+.password-title {
+  font-family: var(--font, 'Inter', sans-serif);
+  font-size: 18px;
+  font-weight: 600;
+  color: #e2e8f0;
+  letter-spacing: .01em;
+}
+.password-input {
+  width: 100%;
+  height: 48px;
+  padding: 0 16px;
+  background: rgba(255,255,255,.07);
+  border: 1px solid rgba(255,255,255,.15);
+  border-radius: 12px;
+  color: #f1f5f9;
+  font-size: 18px;
+  font-family: var(--font, 'Inter', sans-serif);
+  outline: none;
+  text-align: center;
+  letter-spacing: .15em;
+  box-sizing: border-box;
+  touch-action: manipulation;
+}
+.password-input:focus { border-color: rgba(99,102,241,.7); }
+.password-btn {
+  width: 100%;
+  height: 50px;
+  border: none;
+  border-radius: 50px;
+  background: linear-gradient(135deg, #6366f1 0%, #8b5cf6 100%);
+  color: #fff;
+  font-size: 16px;
+  font-weight: 600;
+  font-family: var(--font, 'Inter', sans-serif);
+  cursor: pointer;
+  touch-action: manipulation;
+  box-shadow: 0 4px 20px rgba(99,102,241,.45);
+  transition: opacity .2s;
+}
+.password-btn:disabled { opacity: .55; cursor: default; }
+.password-error {
+  font-family: var(--font, 'Inter', sans-serif);
+  font-size: 14px;
+  color: #f87171;
+  min-height: 18px;
+}
+
 /* ----- RESET & BASE ----- */
 *, *::before, *::after {
   margin: 0;

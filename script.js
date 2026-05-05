@@ -992,8 +992,12 @@ async function init() {
   await runIntro();
 }
 
-if (document.readyState === 'loading') {
-  document.addEventListener('DOMContentLoaded', init);
-} else {
-  init();
+/* Якщо data.enc.js завантажено — запуск відбудеться після введення пароля.
+   Якщо його немає (локальна розробка) — стартуємо одразу. */
+if (typeof ENC === 'undefined') {
+  if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', init);
+  } else {
+    init();
+  }
 }
