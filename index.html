@@ -45,7 +45,7 @@
     <div id="pg-s2" class="pg-box pg-scene-hidden">
       <div class="pg-badge">✨ Крок 2 з 2</div>
       <div class="pg-emoji" id="pg-emo-2">☕</div>
-      <div class="pg-q">В якому закладі ми були? 😏</div>
+      <div class="pg-q">В якому закладі ми були в цей день? 😏</div>
       <input id="pg-v" class="pg-tin" type="text" placeholder="назва закладу"
              autocomplete="off" autocorrect="off" spellcheck="false">
       <button id="pg-b2" class="pg-btn">Відкрити чат ❤️</button>
@@ -57,6 +57,9 @@
 
     <!-- Starfield -->
     <div class="starfield" id="starfield"></div>
+
+    <!-- Floating hearts (chat background) -->
+    <div class="pg-bg-hearts" id="chat-hearts"></div>
 
     <!-- Chat Header -->
     <div class="chat-header" id="chat-header">
@@ -84,6 +87,7 @@
     <!-- Finale Overlay -->
     <div id="finale" class="finale-overlay hidden">
       <canvas id="confetti-canvas"></canvas>
+      <div class="pg-bg-hearts" id="finale-hearts"></div>
       <div class="finale-content">
         <div class="finale-emoji" id="finale-emoji">💍</div>
         <div class="finale-title" id="finale-title"></div>
