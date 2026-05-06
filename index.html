@@ -290,20 +290,6 @@
         });
       }
 
-      /* ---- Scene 2 → Scene 1 (back) ---- */
-      function _toScene1() {
-        gsap.to(_s2, { opacity: 0, duration: 0.25, ease: 'power2.in',
-          onComplete: () => {
-            _s2.classList.add('pg-scene-hidden');
-            _s1.classList.remove('pg-scene-hidden');
-            gsap.fromTo(_s1, { opacity: 0 }, { opacity: 1, duration: 0.3, ease: 'power2.out' });
-            _floatEmoji('pg-emo-1');
-            setTimeout(() => _py.focus(), 350);
-          },
-        });
-        setTimeout(() => { _floatEmoji('pg-emo-1'); _py.focus(); }, 680);
-      }
-
       /* ---- Scene 1 submit ---- */
       async function _s1Next() {
         const d = _pd.value.trim(), m = _pm.value.trim(), y = _py.value.trim();
