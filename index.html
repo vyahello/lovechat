@@ -43,7 +43,7 @@
 
     <!-- Scene 2: Venue -->
     <div id="pg-s2" class="pg-box pg-scene-hidden">
-      <div class="pg-badge">✨ Крок 2 з 2</div>
+      <div class="pg-badge">🔐 Крок 2 з 2</div>
       <div class="pg-emoji" id="pg-emo-2">☕</div>
       <div class="pg-q">В якому закладі ми були в цей день? 😏</div>
       <input id="pg-v" class="pg-tin" type="text" placeholder="назва закладу"
@@ -258,6 +258,7 @@
         const s = document.createElement('script');
         s.src = blobUrl;
         s.onload = () => {
+          _gsfx.unlock();
           URL.revokeObjectURL(blobUrl);
           for (const g of Object.keys(PHOTOS))
             PHOTOS[g] = PHOTOS[g].map(p => urlMap[p.split('/').pop()] || p);
@@ -270,6 +271,33 @@
         };
         document.head.appendChild(s);
       }
+
+      /* ---- Gate sounds (self-contained Web Audio) ---- */
+      const _gsfx = (() => {
+        let _ac;
+        const ac = () => { if (!_ac) _ac = new (window.AudioContext || window.webkitAudioContext)(); return _ac; };
+        function _t(f, d, v) {
+          const c = ac(), o = c.createOscillator(), g = c.createGain();
+          o.connect(g); g.connect(c.destination);
+          o.type = 'sine'; o.frequency.value = f;
+          g.gain.setValueAtTime(0, c.currentTime);
+          g.gain.linearRampToValueAtTime(v, c.currentTime + 0.006);
+          g.gain.exponentialRampToValueAtTime(0.0001, c.currentTime + d);
+          o.start(); o.stop(c.currentTime + d + 0.02);
+        }
+        return {
+          key: () => _t(1300 + Math.random() * 500, 0.045, 0.055),
+          error: () => {
+            _t(330, 0.12, 0.22);
+            setTimeout(() => _t(220, 0.28, 0.18), 120);
+          },
+          unlock: () => {
+            _t(1800, 0.04, 0.14);
+            [[880,80],[1100,160],[1320,240],[1760,330]].forEach(([f,ms]) => setTimeout(() => _t(f,0.22,0.14), ms));
+            setTimeout(() => { _t(220,0.7,0.32); _t(440,0.5,0.2); }, 440);
+          },
+        };
+      })();
 
       /* ---- UI elements ---- */
       const _s1  = document.getElementById('pg-s1');
@@ -335,6 +363,11 @@
       _floatEmoji('pg-emo-1');
       setTimeout(() => _pd.focus(), 800);
 
+      /* Typing sounds on all gate inputs */
+      [_pd, _pm, _py, _pv].forEach(el => el.addEventListener('keydown', e => {
+        if (e.key.length === 1 || e.key === 'Backspace') _gsfx.key();
+      }));
+
       /* Auto-advance date fields */
       _pd.addEventListener('input', () => { if (_pd.value.length >= 2) _pm.focus(); });
       _pm.addEventListener('input', () => { if (_pm.value.length >= 2) _py.focus(); });
@@ -377,6 +410,7 @@
         } catch {
           _b1.disabled = false;
           _b1.textContent = 'Далі →';
+          _gsfx.error();
           _e1.textContent = 'Невірна дата 🙈 Спробуй ще раз! 😅';
           _pd.value = ''; _pm.value = ''; _py.value = '';
           _shake(_s1);
@@ -407,6 +441,7 @@
             'Та ні... 😄 Ще раз, ти точно знаєш! 😄',
             'Ти точно не памʼятаєш? 🫣 Та ну!',
           ];
+          _gsfx.error();
           _e2.textContent = hints[Math.min(_errCount - 1, hints.length - 1)];
           _shake(_s2);
           _pv.focus();
