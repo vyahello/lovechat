@@ -74,7 +74,12 @@
       </div>
       <div class="header-icons">
         <span>📞</span>
-        <span>⋮</span>
+        <span id="header-menu-btn">⋮</span>
+        <div id="header-menu" class="header-menu hidden">
+          <div class="header-menu-item" data-menu="block">Заблокувати Володю 🚫</div>
+          <div class="header-menu-item" data-menu="delete">Видалити чат 🗑️</div>
+          <div class="header-menu-item" data-menu="report">Поскаржитись 😤</div>
+        </div>
       </div>
     </div>
 
@@ -84,13 +89,53 @@
     <!-- Action Buttons -->
     <div id="action-area" class="action-area"></div>
 
+    <!-- Incoming call popup -->
+    <div id="call-popup" class="call-popup hidden">
+      <div class="call-box">
+        <div class="call-avatar-wrap">
+          <div class="call-pulse"></div>
+          <div class="call-pulse call-pulse-2"></div>
+          <img id="call-avatar" class="call-avatar" src="" alt="">
+        </div>
+        <div class="call-name">Володя ❤️ 🐻</div>
+        <div id="call-status" class="call-status">Виклик...</div>
+        <div id="call-cats" class="call-cats hidden">
+          <span class="call-cat">🐱</span>
+          <span class="call-cat">🐾</span>
+          <span class="call-cat">🐱</span>
+        </div>
+        <button id="call-close" class="back-popup-btn call-hangup hidden">Закрити</button>
+      </div>
+    </div>
+
+    <!-- Menu joke popup -->
+    <div id="menu-popup" class="back-popup hidden">
+      <div class="back-popup-box">
+        <div id="menu-popup-icon" class="back-popup-icon"></div>
+        <div id="menu-popup-title" class="back-popup-title"></div>
+        <div id="menu-popup-text" class="back-popup-text"></div>
+        <button class="back-popup-btn" id="menu-popup-ok">Зрозуміло 😅</button>
+      </div>
+    </div>
+
+    <!-- Back-button popup -->
+    <div id="back-popup" class="back-popup hidden">
+      <div class="back-popup-box">
+        <div class="back-popup-icon">🤨</div>
+        <div class="back-popup-title">Стоп-стоп-стоп 🛑</div>
+        <div class="back-popup-text">Куди це ти зібралась виходити? 😏<br>Тут тепло, затишно і є я 🐻<br>Нікуди не йдемо 😄🫶</div>
+        <button class="back-popup-btn" id="back-popup-ok">Добре, лишаюсь 😅</button>
+      </div>
+    </div>
+
     <!-- Profile Overlay -->
     <div id="profile-overlay" class="profile-overlay hidden">
       <div class="profile-backdrop" id="profile-backdrop"></div>
       <div class="profile-card" id="profile-card">
         <button class="profile-close" id="profile-close" aria-label="Закрити">✕</button>
         <div class="profile-photo-wrap">
-          <img id="profile-photo" class="profile-photo" src="" alt="">
+          <div class="profile-photos-track" id="profile-photos-track"></div>
+          <div class="profile-dots" id="profile-dots"></div>
           <div class="profile-name-overlay">
             <div id="profile-name" class="profile-name"></div>
             <div id="profile-title" class="profile-title"></div>
