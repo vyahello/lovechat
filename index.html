@@ -84,6 +84,23 @@
     <!-- Action Buttons -->
     <div id="action-area" class="action-area"></div>
 
+    <!-- Profile Overlay -->
+    <div id="profile-overlay" class="profile-overlay hidden">
+      <div class="profile-backdrop" id="profile-backdrop"></div>
+      <div class="profile-card" id="profile-card">
+        <button class="profile-close" id="profile-close" aria-label="Закрити">✕</button>
+        <div class="profile-photo-wrap">
+          <img id="profile-photo" class="profile-photo" src="" alt="">
+          <div class="profile-name-overlay">
+            <div id="profile-name" class="profile-name"></div>
+            <div id="profile-title" class="profile-title"></div>
+            <div id="profile-handle" class="profile-handle"></div>
+          </div>
+        </div>
+        <ul id="profile-bio" class="profile-bio"></ul>
+      </div>
+    </div>
+
     <!-- Finale Overlay -->
     <div id="finale" class="finale-overlay hidden">
       <canvas id="confetti-canvas"></canvas>
