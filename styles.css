@@ -630,13 +630,28 @@ body {
 }
 
 .finale-emoji {
+  position: relative;
+  display: inline-block;
   font-size: 88px;
   line-height: 1;
   margin-bottom: 14px;
-  filter: brightness(1.35) saturate(1.4);
   transform: scale(0);
   opacity: 0;
 }
+.ring-band {
+  display: block;
+  filter: sepia(0.9) saturate(3) hue-rotate(8deg) brightness(1.3);
+}
+/* Overlay natural-colour emoji, clipped to just the gem region */
+.ring-gem {
+  position: absolute;
+  top: 0; left: 0;
+  width: 100%; height: 100%;
+  clip-path: inset(0 20% 52% 20%);
+}
+
+/* Inline 💍 in text/buttons: light gold that keeps diamond blue */
+.gr { filter: sepia(0.35) saturate(2.5) hue-rotate(10deg) brightness(1.2); }
 
 @keyframes ring-float {
   0%, 100% { transform: translateY(0); }
