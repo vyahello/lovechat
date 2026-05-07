@@ -640,18 +640,20 @@ body {
 }
 .ring-band {
   display: block;
-  filter: sepia(0.9) saturate(3) hue-rotate(8deg) brightness(1.3);
+  /* sepia(1) converts white highlights to warm yellow; saturate(4) makes them vivid gold;
+     brightness must stay ≤1 — higher values wash the yellow back to white */
+  filter: sepia(1) saturate(4) hue-rotate(8deg) brightness(0.95);
 }
-/* Overlay natural-colour emoji, clipped to just the gem (ellipse, not rectangle) */
+/* Overlay natural-colour emoji, clipped tightly to just the diamond face */
 .ring-gem {
   position: absolute;
   top: 0; left: 0;
   width: 100%; height: 100%;
-  clip-path: ellipse(20% 22% at 50% 24%);
+  clip-path: ellipse(16% 19% at 50% 21%);
 }
 
-/* Inline 💍 in text/buttons: strong enough to look gold, small enough that gem detail is irrelevant */
-.gr { filter: sepia(0.75) saturate(3) hue-rotate(8deg) brightness(1.25); }
+/* Inline 💍 — same gold logic, no brightness blowout */
+.gr { filter: sepia(1) saturate(4) hue-rotate(8deg) brightness(0.95); }
 
 @keyframes ring-float {
   0%, 100% { transform: translateY(0); }
