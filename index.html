@@ -382,23 +382,24 @@
         }
         _gsfx.success();
         const rect = boxEl.getBoundingClientRect();
-        const cx = rect.left + rect.width / 2;
-        const cy = rect.top + rect.height * 0.42;
         ['✨','💚','✨','🎉','💚','✨'].forEach((emoji, i) => {
-          const el = document.createElement('div');
-          el.className = 'pg-spark';
-          el.textContent = emoji;
-          el.style.left = (cx + (Math.random() - 0.5) * rect.width * 0.7) + 'px';
-          el.style.top  = cy + 'px';
-          document.body.appendChild(el);
-          gsap.fromTo(el,
-            { opacity: 1, y: 0, x: 0, scale: 0.5, rotation: (Math.random() - 0.5) * 20 },
-            { opacity: 0, y: -(55 + Math.random() * 65), x: (Math.random() - 0.5) * 65,
-              scale: 1.1, rotation: (Math.random() - 0.5) * 50,
-              duration: 0.9 + Math.random() * 0.4, ease: 'power2.out', delay: i * 0.07,
-              onComplete() { el.remove(); }
-            }
-          );
+          setTimeout(() => {
+            const el = document.createElement('div');
+            el.className = 'pg-spark';
+            el.textContent = emoji;
+            el.style.left = (rect.left + Math.random() * rect.width) + 'px';
+            el.style.top  = rect.top + 'px';
+            document.body.appendChild(el);
+            gsap.to(el, {
+              y: -(65 + Math.random() * 60),
+              x: (Math.random() - 0.5) * 65,
+              opacity: 0,
+              scale: 1.3,
+              duration: 0.9 + Math.random() * 0.4,
+              ease: 'power2.out',
+              onComplete() { el.remove(); },
+            });
+          }, i * 75);
         });
       }
 
