@@ -924,6 +924,7 @@ body {
 .heart-beat {
   display: inline-block;
   animation: heartbeat 1.3s ease-in-out infinite;
+  animation-play-state: paused;
 }
 
 @keyframes heartbeat {
