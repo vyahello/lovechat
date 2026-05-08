@@ -276,7 +276,12 @@
       /* ---- Gate sounds (self-contained Web Audio) ---- */
       const _gsfx = (() => {
         let _ac;
-        const ac = () => { if (!_ac) _ac = new (window.AudioContext || window.webkitAudioContext)(); return _ac; };
+        const ac = () => {
+          if (!_ac) _ac = window.__proposalAudioContext || new (window.AudioContext || window.webkitAudioContext)();
+          window.__proposalAudioContext = _ac;
+          if (_ac.state === 'suspended') _ac.resume();
+          return _ac;
+        };
         function _t(f, d, v) {
           const c = ac(), o = c.createOscillator(), g = c.createGain();
           o.connect(g); g.connect(c.destination);
