@@ -3,7 +3,7 @@
 ## Encrypt photos
 
 ```bash
-node encrypt.js
+./encrypt.sh
 ```
 
 ## Run locally
