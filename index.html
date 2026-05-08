@@ -270,7 +270,7 @@
           _gate.style.opacity = '0';
           setTimeout(() => { _gate.remove(); init(); }, 630);
         };
-        document.head.appendChild(s);
+        return () => document.head.appendChild(s);
       }
 
       /* ---- Gate sounds (self-contained Web Audio) ---- */
@@ -475,8 +475,10 @@
         _b2.textContent = 'Відкриваю наш чат...';
         _e2.textContent = '';
         try {
-          await _unlock(_dateStr + venue.toLowerCase());
+          const _commit = await _unlock(_dateStr + venue.toLowerCase());
           _floatSuccess(_s2, 'pg-emo-2');
+          await new Promise(r => setTimeout(r, 820));
+          _commit();
         } catch {
           _errCount++;
           _b2.disabled = false;
