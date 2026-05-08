@@ -629,6 +629,10 @@ body {
   line-height: 1.55;
   word-break: break-word;
   position: relative;
+  user-select: none;
+  -webkit-user-select: none;
+  -webkit-touch-callout: none;
+  touch-action: manipulation;
 }
 
 .from-me .msg-bubble {
@@ -672,10 +676,13 @@ body {
   border-radius: 50%;
   overflow: hidden;
   flex-shrink: 0;
-  /* iOS Safari fix: змушує браузер кліпати всередині border-radius */
   -webkit-transform: translateZ(0);
   transform: translateZ(0);
   isolation: isolate;
+  /* Запобігаємо GPU-шару скидати кліп при сусідніх DOM-змінах */
+  will-change: transform;
+  -webkit-backface-visibility: hidden;
+  backface-visibility: hidden;
 }
 
 .msg-bubble.sticker-bubble img {
@@ -684,6 +691,10 @@ body {
   object-fit: cover;
   object-position: center 50%;
   display: block;
+  /* Резервний кліп: якщо overflow:hidden батьку тимчасово не спрацює */
+  border-radius: 50%;
+  -webkit-backface-visibility: hidden;
+  backface-visibility: hidden;
 }
 
 /* ----- TYPING INDICATOR ----- */
@@ -1136,6 +1147,22 @@ body {
 /* Clickable avatars */
 .header-avatar-wrap,
 .msg-avatar { cursor: pointer; }
+
+/* ----- MSG ROW WITH LIKE (підіймаємо над наступними рядками) ----- */
+.msg-row--liked {
+  position: relative;
+  z-index: 2;
+}
+
+/* ----- MSG PRESSED STATE (тільки текстові бульбашки — фото/стікер без scale) ----- */
+.msg-bubble--pressed:not(.photo-bubble):not(.sticker-bubble) {
+  position: relative;
+  z-index: 2;
+  box-shadow: 0 0 0 2.5px rgba(255,255,255,0.28), 0 6px 22px rgba(0,0,0,0.55) !important;
+}
+.from-she .msg-bubble--pressed:not(.photo-bubble):not(.sticker-bubble) {
+  box-shadow: 0 0 0 2.5px rgba(124,58,237,0.65), 0 6px 22px rgba(124,58,237,0.30) !important;
+}
 
 /* ----- MESSAGE CONTEXT MENU ----- */
 .msg-ctx-menu {

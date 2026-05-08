@@ -327,6 +327,7 @@
 
       /* ---- Helpers ---- */
       function _shake(el) {
+        try { navigator.vibrate?.([60, 40, 60, 40, 60, 40, 60]); } catch (_) {}
         gsap.killTweensOf(el, 'x');
         gsap.fromTo(el, { x: -10 }, {
           x: 10, duration: 0.06, ease: 'none',
