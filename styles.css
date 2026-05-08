@@ -1137,6 +1137,59 @@ body {
 .header-avatar-wrap,
 .msg-avatar { cursor: pointer; }
 
+/* ----- MESSAGE CONTEXT MENU ----- */
+.msg-ctx-menu {
+  position: fixed;
+  z-index: 99998;
+  background: #1e1e2e;
+  border: 1px solid rgba(255,255,255,0.12);
+  border-radius: 14px;
+  overflow: hidden;
+  box-shadow: 0 8px 32px rgba(0,0,0,0.65);
+  min-width: 164px;
+}
+.msg-ctx-btn {
+  display: block;
+  width: 100%;
+  padding: 13px 16px;
+  background: none;
+  border: none;
+  color: rgba(255,255,255,0.85);
+  font-family: var(--font);
+  font-size: 14px;
+  font-weight: 500;
+  cursor: pointer;
+  text-align: left;
+  transition: background 0.15s;
+}
+.msg-ctx-btn:not(:last-child) {
+  border-bottom: 1px solid rgba(255,255,255,0.06);
+}
+.msg-ctx-btn:active { background: rgba(255,255,255,0.08); }
+
+/* ----- LIKE BADGE ----- */
+.msg-like-badge {
+  position: absolute;
+  bottom: -12px;
+  right: -8px;
+  font-size: 14px;
+  line-height: 1;
+  background: #1e1e2e;
+  border: 1.5px solid rgba(255,255,255,0.12);
+  border-radius: 50%;
+  width: 26px;
+  height: 26px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  box-shadow: 0 2px 8px rgba(0,0,0,0.45);
+  pointer-events: none;
+}
+.from-she .msg-like-badge {
+  right: auto;
+  left: -8px;
+}
+
 /* ----- UTILS ----- */
 .hidden { display: none !important; }
 
