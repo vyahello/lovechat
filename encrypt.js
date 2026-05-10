@@ -29,10 +29,11 @@ const MAGIC = Buffer.from('ENC1');
 let sharp;
 try { sharp = require('sharp'); } catch { sharp = null; }
 
+const _rl = require('readline').createInterface({ input: process.stdin, output: process.stdout });
 function ask(q) {
-  const rl = require('readline').createInterface({ input: process.stdin, output: process.stdout });
-  return new Promise(r => rl.question(q, a => { rl.close(); r(a.trim()); }));
+  return new Promise(r => _rl.question(q, a => r(a.trim())));
 }
+function askClose() { _rl.close(); }
 
 async function deriveKey(password, salt) {
   const raw = await subtle.importKey(
@@ -80,13 +81,15 @@ async function readPhoto(filePath) {
 async function main() {
   if (!sharp) console.warn('⚠ sharp not installed — photos will not be compressed. Run: npm install sharp\n');
 
-  /* --- Ask for date and venue separately --- */
-  const dateStr = await ask('Date answer (DDMMYYYY, e.g. 15032023): ');
+  /* --- Date and venue: from CLI args (encrypt.sh) or interactive --- */
+  const [,, argDate, argVenue] = process.argv;
+  const dateStr = argDate || await ask('Date answer (DDMMYYYY, e.g. 15032023): ');
   if (!dateStr) { console.error('Date cannot be empty.'); process.exit(1); }
   if (!/^\d{8}$/.test(dateStr)) { console.error('Date must be exactly 8 digits: DDMMYYYY'); process.exit(1); }
 
-  const venueStr = await ask('Venue answer (lowercase, as user will type it): ');
+  const venueStr = argVenue || await ask('Venue answer (lowercase, as user will type it): ');
   if (!venueStr) { console.error('Venue cannot be empty.'); process.exit(1); }
+  askClose();
 
   const fullPassword = dateStr + venueStr.toLowerCase().trim();
   console.log(`\nFull password: "${fullPassword}"`);

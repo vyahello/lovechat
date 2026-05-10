@@ -16,4 +16,4 @@ if [ -z "$DATE_VAL" ] || [ -z "$VENUE_VAL" ]; then
   exit 1
 fi
 
-printf '%s\n%s\n' "$DATE_VAL" "$VENUE_VAL" | node encrypt.js
+node encrypt.js "$DATE_VAL" "$VENUE_VAL"
