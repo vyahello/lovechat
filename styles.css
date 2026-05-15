@@ -416,6 +416,9 @@ body {
   display: block;
 }
 .call-hangup.hidden { display: none; }
+.call-hangup.is-hangup {
+  background: linear-gradient(135deg, #ef4444, #b91c1c);
+}
 .call-cats {
   display: flex;
   justify-content: center;
