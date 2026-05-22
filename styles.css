@@ -1232,3 +1232,213 @@ body {
     border-right: 1px solid rgba(255,255,255,.04);
   }
 }
+
+/* =====================================================
+   ✨ WOW ENHANCEMENTS  (purely additive — no logic/flow changes)
+   GPU-friendly: only transform/opacity animate, so the blurred
+   layers are rasterized once and cheaply composited.
+   ===================================================== */
+
+/* ----- 1 · AMBIENT LIVING BACKGROUND (aurora + vignette) ----- */
+.aurora-bg {
+  position: absolute;
+  inset: 0;
+  z-index: 0;            /* below starfield (same z, earlier in DOM) & chat */
+  pointer-events: none;
+  overflow: hidden;
+  background:
+    radial-gradient(125% 80% at 50% -12%, rgba(124,58,237,.18), transparent 60%),
+    radial-gradient(110% 65% at 50% 116%, rgba(244,114,182,.13), transparent 60%);
+}
+.aurora-bg::before,
+.aurora-bg::after {
+  content: '';
+  position: absolute;
+  border-radius: 50%;
+  filter: blur(64px);
+  opacity: .55;
+  will-change: transform;
+}
+.aurora-bg::before {
+  width: 75vmax; height: 75vmax;
+  left: -25vmax; top: -30vmax;
+  background: radial-gradient(circle, rgba(129,140,248,.50) 0%, rgba(124,58,237,.28) 40%, transparent 70%);
+  animation: aurora-drift-a 24s ease-in-out infinite alternate;
+}
+.aurora-bg::after {
+  width: 65vmax; height: 65vmax;
+  right: -22vmax; bottom: -26vmax;
+  background: radial-gradient(circle, rgba(244,114,182,.46) 0%, rgba(168,85,247,.24) 40%, transparent 70%);
+  animation: aurora-drift-b 30s ease-in-out infinite alternate;
+}
+@keyframes aurora-drift-a {
+  0%   { transform: translate3d(0,0,0)            scale(1);    }
+  100% { transform: translate3d(12vmax, 8vmax, 0) scale(1.18); }
+}
+@keyframes aurora-drift-b {
+  0%   { transform: translate3d(0,0,0)             scale(1.05); }
+  100% { transform: translate3d(-10vmax,-7vmax, 0) scale(1.25); }
+}
+
+/* ----- 2 · CHAT BUBBLE POLISH (gradient borders + sheen + liked glow) ----- */
+/* His bubbles (incoming, left): subtle top highlight + depth */
+.from-me .msg-bubble:not(.photo-bubble):not(.sticker-bubble) {
+  background:
+    linear-gradient(180deg, rgba(255,255,255,.05), transparent 42%),
+    var(--bubble-she);
+  border: 1px solid rgba(255,255,255,.09);
+  box-shadow: 0 2px 12px rgba(0,0,0,.38), inset 0 1px 0 rgba(255,255,255,.06);
+}
+/* Her bubbles (outgoing, right): glossier highlight + richer glow */
+.from-she .msg-bubble:not(.photo-bubble):not(.sticker-bubble) {
+  background:
+    linear-gradient(180deg, rgba(255,255,255,.16), transparent 46%),
+    var(--bubble-me);
+  box-shadow: 0 4px 20px rgba(79,70,229,.45), inset 0 1px 0 rgba(255,255,255,.20);
+}
+/* One-time light sheen sweep as each text bubble appears.
+   Uses border-radius:inherit (NOT overflow:hidden) so the like-badge,
+   which sits outside the bubble, is never clipped. */
+.from-me .msg-bubble:not(.photo-bubble):not(.sticker-bubble)::before,
+.from-she .msg-bubble:not(.photo-bubble):not(.sticker-bubble)::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  border-radius: inherit;
+  pointer-events: none;
+  background: linear-gradient(115deg, transparent 38%, rgba(255,255,255,.30) 50%, transparent 62%);
+  background-size: 220% 100%;
+  background-position: 130% 0;
+  animation: bubble-sheen .85s cubic-bezier(.4,0,.2,1) .06s 1 forwards;
+}
+@keyframes bubble-sheen { to { background-position: -40% 0; } }
+
+/* Liked messages get a soft, slow rose glow */
+.msg-row--liked .msg-bubble:not(.photo-bubble):not(.sticker-bubble) {
+  animation: liked-glow 2.4s ease-in-out infinite;
+}
+@keyframes liked-glow {
+  0%, 100% { box-shadow: 0 0 0 1px rgba(244,114,182,.40), 0 3px 16px rgba(244,114,182,.32); }
+  50%      { box-shadow: 0 0 0 1px rgba(244,114,182,.70), 0 5px 28px rgba(244,114,182,.58); }
+}
+
+/* True frosted glass on his bubbles — desktop only, to keep phones smooth */
+@media (min-width: 480px) and (hover: hover) {
+  .from-me .msg-bubble:not(.photo-bubble):not(.sticker-bubble) {
+    background:
+      linear-gradient(180deg, rgba(255,255,255,.06), transparent 45%),
+      rgba(28,27,46,.60);
+    backdrop-filter: blur(14px) saturate(1.3);
+    -webkit-backdrop-filter: blur(14px) saturate(1.3);
+  }
+}
+
+/* ----- 3 · FINALE SPECTACLE (ring bloom + light rays + richer Ken-Burns) ----- */
+.finale-emoji::before {                       /* soft bloom halo behind the ring */
+  content: '';
+  position: absolute;
+  left: 50%; top: 50%;
+  width: 240px; height: 240px;
+  transform: translate(-50%, -50%);
+  background: radial-gradient(circle, rgba(255,214,120,.55) 0%, rgba(244,114,182,.26) 36%, transparent 68%);
+  filter: blur(8px);
+  z-index: -1;
+  pointer-events: none;
+  animation: ring-bloom 3.2s ease-in-out infinite;
+}
+.finale-emoji::after {                         /* slow rotating light rays */
+  content: '';
+  position: absolute;
+  left: 50%; top: 50%;
+  width: 330px; height: 330px;
+  transform: translate(-50%, -50%);
+  background: repeating-conic-gradient(from 0deg,
+    rgba(255,236,180,.20) 0deg 5deg,
+    transparent          5deg 30deg);
+  -webkit-mask: radial-gradient(circle, transparent 24%, #000 32%, #000 58%, transparent 72%);
+          mask: radial-gradient(circle, transparent 24%, #000 32%, #000 58%, transparent 72%);
+  opacity: .7;
+  z-index: -1;
+  pointer-events: none;
+  animation: ring-rays 16s linear infinite;
+}
+@keyframes ring-rays  { to { transform: translate(-50%, -50%) rotate(360deg); } }
+@keyframes ring-bloom { 0%, 100% { opacity: .55; } 50% { opacity: .95; } }
+
+/* Premium glow ring around the slideshow */
+.slideshow-container {
+  box-shadow: 0 16px 60px rgba(0,0,0,.7), 0 0 0 1px rgba(255,255,255,.08), 0 0 46px rgba(168,85,247,.32);
+}
+/* Richer, more cinematic Ken-Burns on the active slide */
+.slide-img.active {
+  animation: kenburns-pro 9s ease-in-out infinite alternate;
+}
+@keyframes kenburns-pro {
+  0%   { transform: scale(1.04) translate(0, 0)        rotate(0deg);    }
+  100% { transform: scale(1.16) translate(-2.5%, 1.5%) rotate(.6deg);   }
+}
+
+/* ----- 4 · GATE ENTRANCE DAZZLE ----- */
+.pg-box {
+  box-shadow: 0 24px 70px rgba(0,0,0,.6), 0 0 0 1px rgba(129,140,248,.18), 0 0 64px rgba(124,58,237,.22);
+}
+.pg-box::before {                              /* animated gradient border */
+  content: '';
+  position: absolute;
+  inset: -1.5px;
+  border-radius: inherit;
+  padding: 1.5px;
+  background: linear-gradient(130deg, rgba(244,114,182,.75), rgba(129,140,248,.75), rgba(52,211,153,.5));
+  background-size: 220% 220%;
+  -webkit-mask: linear-gradient(#000 0 0) content-box, linear-gradient(#000 0 0);
+  -webkit-mask-composite: xor;
+          mask: linear-gradient(#000 0 0) content-box, linear-gradient(#000 0 0);
+          mask-composite: exclude;
+  z-index: -1;
+  pointer-events: none;
+  animation: gate-border 6s ease infinite;
+}
+@keyframes gate-border { 0%, 100% { background-position: 0% 50%; } 50% { background-position: 100% 50%; } }
+
+/* Gradient applies to a span around the TEXT only — never the emoji,
+   otherwise background-clip:text would clip the emoji into a colored blob. */
+.pg-title .pg-grad-text {                      /* animated gradient title text */
+  background: linear-gradient(100deg, #f472b6, #a5b4fc, #c4b5fd, #f472b6);
+  background-size: 220% auto;
+  -webkit-background-clip: text;
+          background-clip: text;
+  -webkit-text-fill-color: transparent;
+  color: transparent;
+  animation: gate-title-shine 5s linear infinite;
+}
+@keyframes gate-title-shine { to { background-position: 220% center; } }
+
+.pg-btn {                                       /* shimmer sweep on unlock button */
+  position: relative;
+  overflow: hidden;
+}
+.pg-btn::after {
+  content: '';
+  position: absolute;
+  top: 0; left: 0;
+  width: 55%; height: 100%;
+  background: linear-gradient(100deg, transparent, rgba(255,255,255,.45), transparent);
+  transform: translateX(-160%) skewX(-18deg);
+  pointer-events: none;
+  animation: btn-shimmer 3.4s ease-in-out 1s infinite;
+}
+@keyframes btn-shimmer {
+  0%        { transform: translateX(-160%) skewX(-18deg); }
+  55%, 100% { transform: translateX(280%)  skewX(-18deg); }
+}
+
+/* ----- Respect reduced-motion: freeze all ambient/looping motion ----- */
+@media (prefers-reduced-motion: reduce) {
+  .aurora-bg::before, .aurora-bg::after,
+  .finale-emoji::before, .finale-emoji::after,
+  .msg-row--liked .msg-bubble,
+  .pg-box::before, .pg-title .pg-grad-text, .pg-btn::after {
+    animation: none !important;
+  }
+  .slide-img.active { animation: kenburns 7s ease-in-out infinite alternate; }
+}

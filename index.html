@@ -13,13 +13,14 @@
 <body>
   <!-- Quiz gate — always in HTML, hidden for local dev via JS -->
   <div id="password-gate" class="password-gate">
+    <div class="aurora-bg" aria-hidden="true"></div>
     <div class="pg-bg-hearts" id="pg-bg-hearts"></div>
 
     <!-- Scene 1: Date -->
     <div id="pg-s1" class="pg-box">
       <div class="pg-badge">🔐 Крок 1 з 2</div>
       <div class="pg-emoji" id="pg-emo-1">🗓️</div>
-      <div class="pg-title" style="white-space:nowrap">Юстинка, пройди невеликий тест! 😏</div>
+      <div class="pg-title" style="white-space:nowrap"><span class="pg-grad-text">Юстинка, пройди невеликий тест!</span> 😏</div>
       <div class="pg-q">Коли ми вперше зустрілись? 🙂</div>
       <div class="pg-date-row">
         <div class="pg-date-col">
@@ -54,6 +55,9 @@
   </div>
 
   <div id="app" style="visibility:hidden">
+
+    <!-- Ambient living background (aurora) — sits below the starfield -->
+    <div class="aurora-bg" aria-hidden="true"></div>
 
     <!-- Starfield -->
     <div class="starfield" id="starfield"></div>
@@ -148,6 +152,7 @@
 
     <!-- Finale Overlay -->
     <div id="finale" class="finale-overlay hidden">
+      <div class="aurora-bg" aria-hidden="true"></div>
       <canvas id="confetti-canvas"></canvas>
       <div class="pg-bg-hearts" id="finale-hearts"></div>
       <div class="finale-content">
