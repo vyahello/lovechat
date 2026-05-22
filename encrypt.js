@@ -16,6 +16,7 @@ const fs   = require('fs');
 const path = require('path');
 
 const PHOTOS_DIR   = './photos';
+const VOICES_DIR   = './voices';
 const OUTPUT_BIN   = './data.enc';
 const OUTPUT_FLAG  = './data.enc.js';
 const ITERATIONS   = 100_000;
@@ -118,6 +119,21 @@ async function main() {
     const { iv, data } = await encryptBuf(fullKey, raw);
     chunks.push(makeEntry(file, iv, data));
     process.stdout.write('\n');
+  }
+
+  /* Encrypt voice clips with full key — raw bytes, no processing */
+  if (fs.existsSync(VOICES_DIR)) {
+    const vexts  = /\.(m4a|mp3|ogg|wav|aac)$/i;
+    const vfiles = fs.readdirSync(VOICES_DIR).filter(f => vexts.test(f));
+    if (vfiles.length) {
+      console.log(`\nEncrypting ${vfiles.length} voice clips...`);
+      for (const file of vfiles) {
+        const raw = fs.readFileSync(path.join(VOICES_DIR, file));
+        const { iv, data } = await encryptBuf(fullKey, raw);
+        chunks.push(makeEntry(file, iv, data));
+        console.log(`  ✓ ${file} (${(raw.length/1024).toFixed(1)} KB)`);
+      }
+    }
   }
 
   /* Encrypt script.js with full key */

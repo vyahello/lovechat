@@ -216,9 +216,13 @@
       }
 
       function _mime(name) {
-        return /\.png$/i.test(name) ? 'image/png'
-             : /\.gif$/i.test(name) ? 'image/gif'
+        return /\.png$/i.test(name)  ? 'image/png'
+             : /\.gif$/i.test(name)  ? 'image/gif'
              : /\.webp$/i.test(name) ? 'image/webp'
+             : /\.m4a$/i.test(name)  ? 'audio/mp4'
+             : /\.mp3$/i.test(name)  ? 'audio/mpeg'
+             : /\.(ogg|oga)$/i.test(name) ? 'audio/ogg'
+             : /\.wav$/i.test(name)  ? 'audio/wav'
              : 'image/jpeg';
       }
 
@@ -268,6 +272,9 @@
           URL.revokeObjectURL(blobUrl);
           for (const g of Object.keys(PHOTOS))
             PHOTOS[g] = PHOTOS[g].map(p => urlMap[p.split('/').pop()] || p);
+          /* Voice clips → decrypted blob URLs (mutate in place: SFX reads VOICES) */
+          if (typeof VOICES !== 'undefined')
+            VOICES.forEach((p, i) => { VOICES[i] = urlMap[p.split('/').pop()] || p; });
           const ha = document.querySelector('.header-avatar');
           if (ha) ha.src = urlMap[ha.getAttribute('src').split('/').pop()] || ha.src;
           document.getElementById('app').style.visibility = '';

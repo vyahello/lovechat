@@ -9,3 +9,7 @@ package-lock.json
 package.json
 .access
 decrypt.js
+
+.DS_Store
+voices/
+.playwright-mcp/
